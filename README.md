@@ -52,3 +52,6 @@ and modify the values in a loop.
 routine in R, and then print the summary of the model to get the R diagnostics. Briefly explain the statistics in the summary, e.g. Z-value, standard error, p-value. What does this imply about the predictors for your model? Notice many of the variables are multi-valued categorical, and in most cases only some of the values are significant.
 * Task B.3: Test the fitted model using the “adult income test.csv”, and calculate the confusion matrix on the test set, reporting it. Also, give the precision, accuracy and recall (Lecture 3). Note the test set has no missing values.
 * Task B.4: Can you improve your model with different predictors? For instance, you might reconstruct the categorical features to only include significant values and then have an “other” value that groups together all non-significant ones. Perhaps the best way to do this is to create a new data frame with your modified attributes and build the model on that using the R construct “income∼.” Report the R diagnostics and the confusion matrix and other scores on the test set (as per B.3) for the new model and comment on the difference.
+
+# To access the rmarkdown file on cloud click the below link. Or copy the git repository and run the .rmd file in RStudio.
+http://rpubs.com/iaayush/523583
