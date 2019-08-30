@@ -1,0 +1,159 @@
+---
+title: "Machine Learning on R"
+author: "Aayush Kapoor"
+date: "Aug 30, 2019"
+output: html_document
+---
+
+
+## Task A: Linear Regression
+
+#### A.1 For the missing values listed in data set, we created correlation matrix and found that horsepower has high correlation with displacement, cylinders, and weight.But, we did'nt include every variable in linear model due to multicollinearity. We created a model Horsepower~Displacement+Acceleration, with the created model the coefficient of determination was 0.8645, hence our fitted model we were close to 86% of data. Using the linear regression model we imputed the missing values.
+ $$ lm(horsepower ~ Displacement + Acceleration) $$
+
+#### A.2: Pair Plots 
+```{r}
+library(Metrics)
+mpgtrain <- read.csv("auto_mpg_train.csv",header=TRUE)
+attach(mpgtrain)
+pairs(mpgtrain[1:7])
+```
+
+#### Looking at the pair plot, it's quite clear that Mpg(miles per gallon) has negative correlation with cylinders, displacement, horsepower and weight. But, with acceleration some positive correlation could be seen. 
+
+#### A.3: Based on pair plot we found that there's high correlation between mpg vs cylinders, displacement, horsepower, weight,model.year and origin. So, for our regression model to predict mpg we will use cylinders, displacement, horsepower and weight as independent variables and mpg as dependent variable.
+
+#### A.4: Linear Regression Model
+
+```{r}
+
+model1 <- lm(mpg~horsepower+weight+model.year+origin)
+summary(model1)
+```
+##### The first part of the output only shows the arguments of the function that we just called: lm(formula = mpg ~ cylinders + displacement + horsepower + weight).
+##### The second part shows the quartiles of the residuals. As we know, the residuals are defined as the difference between the observed values and the predicted values (i.e.  $y_i - \hat{y_i}$). The residual quartiles help us to investigate whether the residuals look normally distributed around zero or not.
+##### $R^2$ value: evaluates the goodness of the fit which the higher is the better (note that its upper bound is `1`). This value shows the amount of variability in the estimated response variable that is explained by the model. In this case,  almost 82% of mpg can be explained by independent variables cylinders, displacement, horsepower and weight. In multiple linear regression (i.e. when the number of variables is more than one), we need to adjust $R^2$ according to the number of modeled variables because as the number of variable increases the $R^2$ also grows regardless of the model being improved or not. As a result, the adjusted $R^2$ would be a more accurate metric than the original $R^2$.
+##### t-value and Standard Error: The t statistic is the coefficient divided by its standard error. The standard error is an estimate of the standard deviation of the coefficient, the amount it varies across cases. It can be thought of as a measure of the precision with which the regression coefficient is measured. 
+##### p-value: The p-value for each term tests the null hypothesis that the coefficient is equal to zero (no effect). A low p-value (< 0.05) indicates that you can reject the null hypothesis. In other words, a predictor that has a low p-value is likely to be a meaningful addition to your model because changes in the predictor's value are related to changes in the response variable.
+
+#### A.5: Mean Square Error
+```{r}
+autotest <- read.csv("auto_mpg_test.csv",header = TRUE)
+autotest$y <- predict(model1,autotest) # adding a new column conaining predicted value
+attach(autotest)
+cat("Mean Square error based on Model:",mse(mpg,y))
+```
+
+#### A.6: Making a better model
+##### To make our model better we should first check for multicollinearity, the independent variables like displacement, horsepower, weight, model.year and origin could be correlated to each other and we cannot include both in our regression model.  
+```{r}
+library(faraway)
+vif(model1)
+```
+##### So, the choose model shows the Variance Inflation Factor(VIF) greater than 5 for 3 variables. It shows that our model face issue of multicollinearity. We, need to remove multicollinearity and fit a new model. Let's remove displacement, horsepower to fit new model.
+
+```{r}
+attach(mpgtrain)
+model2 <- lm(mpg ~ weight+model.year+origin)
+summary(model2)
+autotest$y2 <- predict(model2,autotest)
+attach(autotest)
+cat("Mean Square error based on Model:",mse(mpg,y2))
+```
+##### We, can improve our model by taking log of weight(changing scale) and fitting the same model again to reduce MSE(mean square error). 
+
+```{r}
+mpgtrain$log_weight <- log(mpgtrain$weight,2) # creating a new column that contains log weight
+autotest$log_weight <- log(autotest$weight,2) # creating a new column that contains log weight
+attach(mpgtrain)
+model3 <- lm(mpg ~ log_weight+model.year+origin)
+summary(model3)
+mse(autotest$mpg,predict(model3,autotest))
+```
+#### So, the MSE is for the model created has lowest value as compared to any other model we created. It seems to be the best model in predicting mpg.
+
+## Task B: Logistic Regression
+
+#### B.1: Missing Values
+##### Columns like workclass, occupation and native_country have missing values. To impute these missing values we will consider these missing values as "Other" category all together.
+
+```{r}
+incometrain <- read.csv("adult_income_train.csv",header = TRUE)
+
+# Replacing "?" with "Missing Informative"
+library(plyr)
+incometrain$workclass <- revalue(incometrain$workclass, c("?"="Missing Informative"))
+incometrain$occupation <- revalue(incometrain$occupation, c("?"="Missing Informative"))
+incometrain$native_country <- revalue(incometrain$native_country, c("?"="Missing Informative"))
+```
+#### B.2: Building GLM
+
+```{r}
+model4 <- glm(income~.,family=binomial, data=incometrain)
+summary(model4)
+
+```
+
+#### B.3: Confusion Matrix, Precision, Accuracy and Recall for Model
+```{r}
+incometest <- read.csv("adult_income_test.csv",header=TRUE)
+incometest$incomepred <- round(predict(model4,incometest,type = 'response'))
+# Confusion Matrix
+confusion.matrix <- as.matrix(table('Actual'=incometest$income,'Prediction'=(incometest$incomepred)))
+confusion.matrix                              
+N <- nrow(incometest)
+diag <- diag(confusion.matrix)
+Accuracy <- sum(diag)/N
+round(Accuracy*100,2)
+
+#precision, accuracy and recall
+rowsums = apply(confusion.matrix, 1, sum)
+colsums = apply(confusion.matrix, 2, sum)
+Actual.Dist = rowsums / N
+Predicted.Dist= colsums / N
+Precision = diag / colsums
+Recall = diag / rowsums
+F1 = 2 * Precision * Recall / (Precision + Recall)
+round(data.frame(Precision, Recall, F1, Actual.Dist, Predicted.Dist)*100,2)
+```
+
+#### B.4: 
+```{r}
+library(plyr)
+incomenew <- read.csv("adult_income_train.csv",header = TRUE)
+incomenew$workclass <- revalue(incomenew$workclass, c("?"="Missing Informative","Never-worked"="Other","Without-pay"= "Other","Self-emp-not-inc"="Other","State-gov"="Other"))
+incomenew$education <- revalue(incomenew$education, c("11th"="Other", "12th"= "Other", "1st-4th"= "Other","5th-6th"= "Other", "7th-8th"= "Other", "9th"= "Other","Preschool"= "Other"))
+incomenew$marital_status <- revalue(incomenew$marital_status, c("Separated"="Other", "Widowed"= "Other","Never-married"="Other","Married-spouse-absent"="Other"))
+incomenew$occupation <- revalue(incomenew$occupation, c("?"="Missing Informative","Adm-clerical"="Other","Armed-Forces"= "Other", "Craft-repair"="Other","Machine-op-inspct"="Other","Priv-house-serv" = "Other", "Transport-moving" = "Other"))
+incomenew$relationship <- revalue(incomenew$relationship, c("Not-in-family"="Other", "Other-relative"= "Other", "Own-child"="Other", "Unmarried"= "Other"))
+incomenew$race <- revalue(incomenew$race, c("Black"="Other", "White"= "Other"))
+incomenew$native_country <- revalue(incomenew$native_country, c("?"="Missing Informative",	"Cambodia"="Other",		"China"="Other","Cuba"="Other",	"Dominican-Republic"="Other",	"Ecuador"="Other",	"El-Salvador"="Other",	"England"="Other",	"France"="Other",	"Germany"="Other",	"Greece"="Other",	"Guatemala"="Other",	"Haiti"="Other",	"Holand-Netherlands"="Other",	"Honduras"="Other",	"Hong"="Other",	"Hungary"="Other",	"India"="Other",	"Iran"="Other",	"Ireland"="Other",	"Jamaica"="Other",	"Japan"="Other",	"Laos"="Other",	"Nicaragua"="Other",	"Outlying-US(Guam-USVI-etc)"="Other",	"Peru"="Other",	"Philippines"="Other",	"Poland"="Other",	"Portugal"="Other",	"Puerto-Rico"="Other",	"Scotland"="Other",	"Taiwan"="Other",	"Thailand"="Other",	"Trinadad&Tobago"="Other",	"United-States"="Other",	"Vietnam"="Other",	"Yugoslavia"="Other"))
+
+```
+
+```{r}
+model5 <- glm(income~.,family=binomial, data=incomenew)
+summary(model5)
+```
+
+
+#### B.5: Imporving the model
+```{r}
+incometest2 <- read.csv("adult_income_test.csv",header=TRUE)
+incometest2$workclass <- revalue(incometest2$workclass, c("Without-pay"= "Other","Self-emp-not-inc"="Other","State-gov"="Other"))
+incometest2$education <- revalue(incometest2$education, c("11th"="Other", "12th"= "Other", "1st-4th"= "Other","5th-6th"= "Other", "7th-8th"= "Other", "9th"= "Other","Preschool"= "Other"))
+incometest2$marital_status <- revalue(incometest2$marital_status, c("Separated"="Other", "Widowed"= "Other","Never-married"="Other","Married-spouse-absent"="Other"))
+incometest2$occupation <- revalue(incometest2$occupation, c("Adm-clerical"="Other","Armed-Forces"= "Other", "Craft-repair"="Other","Machine-op-inspct"="Other","Priv-house-serv" = "Other", "Transport-moving" = "Other"))
+incometest2$relationship <- revalue(incometest2$relationship, c("Not-in-family"="Other", "Other-relative"= "Other", "Own-child"="Other", "Unmarried"= "Other"))
+incometest2$race <- revalue(incometest2$race, c("Black"="Other", "White"= "Other"))
+incometest2$native_country <- revalue(incometest2$native_country, c("Cambodia"="Other",		"China"="Other","Cuba"="Other",	"Dominican-Republic"="Other",	"Ecuador"="Other",	"El-Salvador"="Other",	"England"="Other",	"France"="Other",	"Germany"="Other",	"Greece"="Other",	"Guatemala"="Other",	"Haiti"="Other",	"Honduras"="Other",	"Hong"="Other",	"Hungary"="Other",	"India"="Other",	"Iran"="Other",	"Ireland"="Other",	"Jamaica"="Other",	"Japan"="Other",	"Laos"="Other",	"Nicaragua"="Other",	"Outlying-US(Guam-USVI-etc)"="Other",	"Peru"="Other",	"Philippines"="Other",	"Poland"="Other",	"Portugal"="Other",	"Puerto-Rico"="Other",	"Scotland"="Other",	"Taiwan"="Other",	"Thailand"="Other",	"Trinadad&Tobago"="Other",	"United-States"="Other",	"Vietnam"="Other",	"Yugoslavia"="Other"))
+incometest2$incomepred <- round(predict(model5,incometest2,type = 'response'))
+
+# Confusion Matrix
+confusion.matrix <- as.matrix(table('Actual'=incometest2$income,'Prediction'=(incometest2$incomepred)))
+confusion.matrix                              
+N <- nrow(incometest2)
+diag <- diag(confusion.matrix)
+Accuracy <- sum(diag)/N
+round(Accuracy*100,2)
+```
