@@ -15,7 +15,7 @@ Build a linear regression model using the specific “auto mpg train.csv” prov
 9. car name: string (unique for each instance)
 
 ## Tasks
-### A.1: There are some missing values listed as “?”. Describe your strategy for treating missing values and update (edit by hand) the file accordingly.
+* A.1: There are some missing values listed as “?”. Describe your strategy for treating missing values and update (edit by hand) the file accordingly.
 ### A.2: Pair plot mpg vs. the other variables to visualize the relationships and discuss what you see.
 ### A.3: Based on your pair plots, propose an initial set of variables to use for a multiple linear regression model to predict mpg.
 ### A.4: With variables of your choice build the model using the lm() routine in R, and then print the summary of the model to get the R diagnostics. Briefly explain the statistics in the summary, e.g. R2 value, t-value, standard error, p-value (ignoring the F-statistics line). What does this imply about the predictors for your model?
