@@ -3,7 +3,7 @@
 # Task A: Linear Regression
 Build a linear regression model using the specific “auto mpg train.csv” provided with the assignment to predict mpg (mile per gallon). The second file “auto mpg test.csv”will be used for evaluation.
 
-## Data Set Information: ”The data concerns city-cycle fuel consumption in miles per gallon, to be predicted in terms of 3 multivalued discrete and 5 continuous attributes.”
+`Data Set Information: The data concerns city-cycle fuel consumption in miles per gallon, to be predicted in terms of 3 multivalued discrete and 5 continuous attributes.`
 1. mpg: continuous, target variable 
 2. cylinders: multi-valued discrete 
 3. displacement: continuous 
